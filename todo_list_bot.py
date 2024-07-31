@@ -34,19 +34,30 @@ def _get_keyboard():
 
 @dispatcher.message_handler(commands=["todo"])
 async def create_task(message: types.Message):
-    _repository.add_task(message.get_args())
-    await message.reply("Добавлена задача")
+    task_number = _repository.add_task(message.get_args())
+    await message.reply("Добавлена задача " + str(task_number[0]))
 
 
 @dispatcher.message_handler(commands=["list"])
 async def get_list(message: types.Message):
-    tasks = _repository.get_list()
+    if message.get_args():
+        tasks = _repository.get_list(message.get_args())
+    else:
+        tasks = _repository.get_list()
     if tasks:
         text = "\n".join([_task_dto_to_string(res) for res in tasks])
     else:
         text = "У вас нет задач!"
     await bot.send_message(message.chat.id, text)
-
+    
+@dispatcher.message_handler(commands=["find"])
+async def find_tasks(message: types.Message):
+    tasks = _repository.find_tasks(message.get_args())
+    if tasks:
+        text = "\n".join([_task_dto_to_string(res) for res in tasks])
+    else:
+        text = 'Задачи по условию "' + message.get_args() + '" не найдены!'
+    await bot.send_message(message.chat.id, text)
 
 @dispatcher.message_handler(commands=["done"])
 async def finish_task(message: types.Message):
@@ -54,6 +65,17 @@ async def finish_task(message: types.Message):
         task_ids = [int(id_) for id_ in message.get_args().split(" ")]
         _repository.finish_tasks(task_ids)
         text = f"Завершенные задачи: {task_ids}"
+    except ValueError as e:
+        text = "Неправильный номер задачи"
+
+    await message.reply(text)
+    
+@dispatcher.message_handler(commands=["reopen"])
+async def reopen_tasks(message: types.Message):
+    try:
+        task_ids = [int(id_) for id_ in message.get_args().split(" ")]
+        _repository.reopen_tasks(task_ids)
+        text = f"Переоткрытые задачи: {task_ids}"
     except ValueError as e:
         text = "Неправильный номер задачи"
 
@@ -82,3 +104,7 @@ async def callback_clear_action(
         query.from_user.id,
         query.message.message_id,
     )
+
+@dispatcher.message_handler(commands=["help"])
+async def create_task(message: types.Message):
+    await message.reply("ToDo бот - менеджер задач.\n/todo - наберите команду и описание задачи и она добавится в список\n/list - покажет список задач\n/done - команда и номер задачи отметит задачу как выполненную.\n/clear - удаление задач")

@@ -5,9 +5,9 @@ name = "pypi"
 
 [packages]
 python-dotenv = "*"
-aiogram = "*"
 sqlalchemy = "*"
 psycopg2 = "*"
+aiogram = "==2.25.1"
 
 [dev-packages]
 
