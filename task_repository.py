@@ -6,8 +6,18 @@ from typing import List
 
 class TaskRepository:
     def add_task(self, text: str):
-        query = tasks.insert().values(text=text)
+        query = tasks.insert().values(text=text, parent_id=-1)
 
+        with engine.connect() as conn:
+            task_num = conn.execute(query)
+            conn.commit()
+            return task_num.inserted_primary_key
+        
+    def add_subtask(self, text: str):
+        text_list = text.split(' ')
+        task_text = ' '.join(text_list[0:-1])
+        parent_id = int(text_list[-1])
+        query = tasks.insert().values(text=task_text, parent_id=parent_id)
         with engine.connect() as conn:
             task_num = conn.execute(query)
             conn.commit()
@@ -22,20 +32,20 @@ class TaskRepository:
         result = []
         with engine.connect() as conn:
             result = [
-                Task(id=id, text=text, is_done=is_done)
-                for id, text, is_done in conn.execute(query.order_by(tasks.c.id))
+                Task(id=id, text=text, is_done=is_done, parent_id=parent_id)
+                for id, text, is_done, parent_id in conn.execute(query.order_by(tasks.c.id))
             ]
 
         return result
     
-    def find_tasks(self, text_string) -> List[Task]:
+    def find_tasks(self, text_string: str) -> List[Task]:
         query = tasks.select().filter(tasks.c.text.ilike(f'%{text_string}%'))
 
         result = []
         with engine.connect() as conn:
             result = [
-                Task(id=id, text=text, is_done=is_done)
-                for id, text, is_done in conn.execute(query.order_by(tasks.c.id))
+                Task(id=id, text=text, is_done=is_done, parent_id=parent_id)
+                for id, text, is_done, parent_id in conn.execute(query.order_by(tasks.c.id))
             ]
 
         return result

@@ -6,6 +6,8 @@ class Task:
     id: int
     text: str = ""
     is_done: bool = False
+    parent_id: int = -1
+    level = 0
 
     def __repr__(self) -> str:
         return str(self)

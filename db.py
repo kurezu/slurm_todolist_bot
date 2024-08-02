@@ -12,6 +12,7 @@ tasks = Table(
     Column("id", Integer, primary_key=True),
     Column("text", String, nullable=False),
     Column("is_done", Boolean, nullable=False, default=False),
+    Column("parent_id", Integer, nullable=False),
 )
 
 
